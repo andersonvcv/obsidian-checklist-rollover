@@ -10,30 +10,11 @@ export default class RolloverSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	async getTemplateHeadings() {
-		const { template } = getDailyNoteSettings();
-		if (!template) return [];
-
-		let file = this.app.vault.getAbstractFileByPath(template);
-
-		if (file === null) {
-			file = this.app.vault.getAbstractFileByPath(template + '.md');
-		}
-
-		if (file === null) {
-			// file not available, no template-heading can be returned
-			return [];
-		}
-
-		const templateContents = await this.app.vault.read(file as TFile);
-		const allHeadings = Array.from(templateContents.matchAll(/#{1,} .*/g)).map(([heading]) => heading);
-		return allHeadings;
-	}
-
 	async display() {
 		const templateHeadings = await this.getTemplateHeadings();
 
 		this.containerEl.empty();
+		this.addTemplateHeadingSelectionOption();
 		new Setting(this.containerEl)
 			.setName('Template heading')
 			.setDesc('Which heading from your template should the todos go under')
@@ -106,5 +87,19 @@ export default class RolloverSettingTab extends PluginSettingTab {
 						this.plugin.loadData().then(value => console.log(value));
 					})
 			);
+	}
+
+	addTemplateHeadingSelectionOption() {}
+
+	async getTemplateHeadings() {
+		const { template } = getDailyNoteSettings();
+		if (!template) {
+			return [];
+		}
+
+		const templateFile = this.app.vault.getAbstractFileByPath(template + '.md');
+		const templateContent = await this.app.vault.read(templateFile as TFile);
+		const templateHeadings = Array.from(templateContent.matchAll(/#{1,} .*/g)).map(([heading]) => heading);
+		return templateHeadings;
 	}
 }

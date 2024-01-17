@@ -1,10 +1,10 @@
 import { App, Notice, Plugin } from 'obsidian';
 import { getDailyNoteSettings, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
-import { getLastDailyNote } from 'src/dailyNotesHelper';
-import { trimSlashes } from 'src/fileHelper';
-import { isDailyNotesEnabled } from 'src/dailyNotesHelper';
+import { getLastDailyNote } from 'src/helpers/dailyNotesHelper';
+import { trimSlashes } from 'src/helpers/fileHelper';
+import { isDailyNotesEnabled } from 'src/helpers/dailyNotesHelper';
 import { isPeriodicNotesEnabled } from './periodicNotesHelper';
-import { getTodos } from './get-todos';
+import { getTodos } from '../get-todos';
 import RolloverTodosPlugin from 'main';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds

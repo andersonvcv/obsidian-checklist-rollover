@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
 import { rollover } from './RollOverHelper';
-import UndoModal from './UndoModal';
+import UndoModal from '../UndoModal';
 import RolloverTodosPlugin from 'main';
 
 export const addRolloverNowCommand = (plugin: Plugin) => {
@@ -35,4 +35,17 @@ export const addUndoRolloverCommand = (plugin: RolloverTodosPlugin) => {
 			return false;
 		}
 	});
+};
+
+export const addRolloverOnDailyAutomaticNoteCreation = (plugin: RolloverTodosPlugin) => {
+	plugin.registerEvent(
+		plugin.app.vault.on('create', async file => {
+			// console.log(`filename: ${file.name}`);
+			// console.log(`filepath: ${file.path}`);
+			// console.log(`fileparent: ${file.parent?.name}`);
+			// console.log(`filevault: ${file.vault.getName()}`);
+			if (!plugin.settings.rolloverOnFileCreate) return;
+			rollover(plugin, file);
+		})
+	);
 };

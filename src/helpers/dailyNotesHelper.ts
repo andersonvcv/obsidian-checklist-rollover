@@ -1,11 +1,11 @@
-import { App } from "obsidian";
+import { App } from 'obsidian';
 import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
-import { formatWithTrailingSlash } from "./fileHelper";
+import { formatWithTrailingSlash } from './fileHelper';
 
 export const isDailyNotesEnabled = (app: App): boolean => {
 	const dailyNotesPlugin = app.internalPlugins.plugins['daily-notes'];
 	return dailyNotesPlugin?.enabled;
-}
+};
 
 export const getLastDailyNote = (app: App) => {
 	const { moment } = window;
@@ -13,10 +13,10 @@ export const getLastDailyNote = (app: App) => {
 	const format = dailyNoteSettings.format;
 	let folder = dailyNoteSettings.folder;
 	console.log(`folder: ${folder}`);
-	
+
 	folder = formatWithTrailingSlash(folder);
 	console.log(`folder: ${folder}`);
-	
+
 	const dailyNoteRegexMatch = new RegExp('^' + folder + '(.*).md$');
 	const todayMoment = moment();
 
@@ -33,9 +33,9 @@ export const getLastDailyNote = (app: App) => {
 		(a, b) => getFileMoment(b, folder, format).valueOf() - getFileMoment(a, folder, format).valueOf()
 	);
 	return sorted[1];
-}
+};
 
-const getFileMoment = (file, folder, format) =>  {
+const getFileMoment = (file, folder, format) => {
 	let path = file.path;
 
 	if (path.startsWith(folder)) {
@@ -49,4 +49,4 @@ const getFileMoment = (file, folder, format) =>  {
 	}
 
 	return moment(path, format);
-}
+};

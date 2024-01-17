@@ -1,8 +1,11 @@
 import { Plugin } from 'obsidian';
 import RolloverSettingTab from './src/RollOverSettingTab';
 import { RolloverSettings } from 'src/Settings';
-import { addRolloverNowCommand, addUndoRolloverCommand } from 'src/obsidianHelper';
-import { rollover } from 'src/RollOverHelper';
+import {
+	addRolloverNowCommand,
+	addRolloverOnDailyAutomaticNoteCreation,
+	addUndoRolloverCommand
+} from 'src/helpers/obsidianHelper';
 
 const DEFAULT_SETTINGS: RolloverSettings = {
 	templateHeading: 'none',
@@ -14,8 +17,8 @@ const DEFAULT_SETTINGS: RolloverSettings = {
 
 export default class RolloverTodosPlugin extends Plugin {
 	settings: RolloverSettings;
-	undoHistory: any[];
-	undoHistoryTime: Date;
+	undoHistory: any[] = [];
+	undoHistoryTime: Date = new Date();
 
 	async loadSettings() {
 		this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
@@ -27,18 +30,10 @@ export default class RolloverTodosPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.undoHistory = [];
-		this.undoHistoryTime = new Date();
 		this.addSettingTab(new RolloverSettingTab(this));
 
-		this.registerEvent(
-			this.app.vault.on('create', async file => {
-				// Check if automatic daily note creation is enabled
-				console.log(`setting create: ${this.settings.rolloverOnFileCreate}`);
-				if (!this.settings.rolloverOnFileCreate) return;
-				rollover(this, file);
-			})
-		);
+		addRolloverOnDailyAutomaticNoteCreation(this);
+
 		addRolloverNowCommand(this);
 		addUndoRolloverCommand(this);
 	}
