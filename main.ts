@@ -36,7 +36,7 @@ export default class RolloverTodosPlugin extends Plugin {
 				// Check if automatic daily note creation is enabled
 				console.log(`setting create: ${this.settings.rolloverOnFileCreate}`);
 				if (!this.settings.rolloverOnFileCreate) return;
-				rollover(this.app, this, file);
+				rollover(this, file);
 			})
 		);
 		addRolloverNowCommand(this);

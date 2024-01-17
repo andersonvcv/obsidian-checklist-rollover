@@ -5,10 +5,11 @@ import { trimSlashes } from 'src/fileHelper';
 import { isDailyNotesEnabled } from 'src/dailyNotesHelper';
 import { isPeriodicNotesEnabled } from './periodicNotesHelper';
 import { getTodos } from './get-todos';
+import RolloverTodosPlugin from 'main';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
 
-export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
+export const rollover = async (plugin: RolloverTodosPlugin, file = undefined) => {
 	console.log('rolling over');
 	/*** First we check if the file created is actually a valid daily note ***/
 	let { folder, format } = getDailyNoteSettings();
@@ -37,7 +38,7 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 	if (today.getTime() - file.stat.ctime > MAX_TIME_SINCE_CREATION && !ignoreCreationTime) return;
 
 	/*** Next, if it is a valid daily note, but we don't have daily notes enabled, we must alert the user ***/
-	if (!isDailyNotesEnabledd(app)) {
+	if (!isDailyNotesEnabledd(plugin.app)) {
 		new Notice(
 			'RolloverTodosPlugin unable to rollover unfinished todos: Please enable Daily Notes, or Periodic Notes (with daily notes enabled).',
 			10000
@@ -46,11 +47,11 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 		const { templateHeading, deleteOnComplete, removeEmptyTodos } = plugin.settings;
 
 		// check if there is a daily note from yesterday
-		const lastDailyNote = getLastDailyNote(app);
+		const lastDailyNote = getLastDailyNote(plugin.app);
 		if (!lastDailyNote) return;
 
 		// get unfinished todos from yesterday, if exist
-		let todos_yesterday = await getAllUnfinishedTodos(app, plugin, lastDailyNote);
+		let todos_yesterday = await getAllUnfinishedTodos(plugin.app, plugin, lastDailyNote);
 
 		console.log(`rollover-daily-todos: ${todos_yesterday.length} todos found in ${lastDailyNote.basename}.md`);
 
@@ -93,7 +94,7 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 		const templateHeadingSelected = templateHeading !== 'none';
 
 		if (todos_today.length > 0) {
-			let dailyNoteContent = await app.vault.read(file);
+			let dailyNoteContent = await plugin.app.vault.read(file);
 			undoHistoryInstance.today = {
 				file: file,
 				oldContent: `${dailyNoteContent}`
@@ -118,12 +119,12 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 				dailyNoteContent += todos_todayString;
 			}
 
-			await app.vault.modify(file, dailyNoteContent);
+			await plugin.app.vault.modify(file, dailyNoteContent);
 		}
 
 		// if deleteOnComplete, get yesterday's content and modify it
 		if (deleteOnComplete) {
-			let lastDailyNoteContent = await app.vault.read(lastDailyNote);
+			let lastDailyNoteContent = await plugin.app.vault.read(lastDailyNote);
 			undoHistoryInstance.previousDay = {
 				file: lastDailyNote,
 				oldContent: `${lastDailyNoteContent}`
@@ -137,7 +138,7 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 			}
 
 			const modifiedContent = lines.join('\n');
-			await app.vault.modify(lastDailyNote, modifiedContent);
+			await plugin.app.vault.modify(lastDailyNote, modifiedContent);
 		}
 
 		// Let user know rollover has been successful with X todos

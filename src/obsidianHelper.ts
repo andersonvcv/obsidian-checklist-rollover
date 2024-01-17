@@ -8,7 +8,7 @@ export const addRolloverNowCommand = (plugin: Plugin) => {
 		id: 'obsidian-rollover-daily-todos-rollover',
 		name: 'Rollover Todos Now',
 		callback: () => {
-			rollover(plugin.app, plugin);
+			rollover(plugin);
 		}
 	});
 };
