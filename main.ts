@@ -1,7 +1,6 @@
 import { Plugin } from 'obsidian';
 import UndoModal from './src/UndoModal';
 import RolloverSettingTab from './src/RollOverSettingTab';
-import { getTodos } from './src/get-todos';
 import { RolloverSettings } from 'src/Settings';
 import { addRolloverNowCommand } from 'src/obsidianHelper';
 import { rollover } from 'src/RollOverHelper';
@@ -16,6 +15,8 @@ const DEFAULT_SETTINGS: RolloverSettings = {
 
 export default class RolloverTodosPlugin extends Plugin {
 	settings: RolloverSettings;
+	undoHistory: any[];
+	undoHistoryTime: Date;
 
 	async loadSettings() {
 		this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
@@ -23,26 +24,6 @@ export default class RolloverTodosPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-
-	async getAllUnfinishedTodos(file) {
-		const dn = await this.app.vault.read(file);
-		const dnLines = dn.split(/\r?\n|\r|\n/g);
-
-		return getTodos({
-			lines: dnLines,
-			withChildren: this.settings.rolloverChildren
-		});
-	}
-
-	async sortHeadersIntoHierarchy(file) {
-		///console.log('testing')
-		const templateContents = await this.app.vault.read(file);
-		const allHeadings = Array.from(templateContents.matchAll(/#{1,} .*/g)).map(([heading]) => heading);
-
-		if (allHeadings.length > 0) {
-			console.log(createRepresentationFromHeadings(allHeadings));
-		}
 	}
 
 	async onload() {

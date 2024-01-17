@@ -4,6 +4,7 @@ import { getLastDailyNote } from 'src/dailyNotesHelper';
 import { trimSlashes } from 'src/fileHelper';
 import { isDailyNotesEnabled } from 'src/dailyNotesHelper';
 import { isPeriodicNotesEnabled } from './periodicNotesHelper';
+import { getTodos } from './get-todos';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
 
@@ -48,11 +49,8 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 		const lastDailyNote = getLastDailyNote(app);
 		if (!lastDailyNote) return;
 
-		// TODO: Rollover to subheadings (optional)
-		//this.sortHeadersIntoHierarchy(lastDailyNote)
-
 		// get unfinished todos from yesterday, if exist
-		let todos_yesterday = await plugin.getAllUnfinishedTodos(lastDailyNote);
+		let todos_yesterday = await getAllUnfinishedTodos(app, plugin, lastDailyNote);
 
 		console.log(`rollover-daily-todos: ${todos_yesterday.length} todos found in ${lastDailyNote.basename}.md`);
 
@@ -173,4 +171,14 @@ export const rollover = async (app: App, plugin: Plugin, file = undefined) => {
 
 const isDailyNotesEnabledd = (app: App) => {
 	return isDailyNotesEnabled(app) || isPeriodicNotesEnabled(app);
+};
+
+const getAllUnfinishedTodos = async (app: App, plugin: Plugin, file) => {
+	const dn = await app.vault.read(file);
+	const dnLines = dn.split(/\r?\n|\r|\n/g);
+
+	return getTodos({
+		lines: dnLines,
+		withChildren: plugin.settings.rolloverChildren
+	});
 };
