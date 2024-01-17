@@ -29,7 +29,7 @@ export default class RolloverTodosPlugin extends Plugin {
 		await this.loadSettings();
 		this.undoHistory = [];
 		this.undoHistoryTime = new Date();
-		this.addSettingTab(new RolloverSettingTab(this.app, this));
+		this.addSettingTab(new RolloverSettingTab(this));
 
 		this.registerEvent(
 			this.app.vault.on('create', async file => {

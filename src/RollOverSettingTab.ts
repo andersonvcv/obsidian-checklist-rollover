@@ -1,9 +1,12 @@
-import { Setting, PluginSettingTab, App, Plugin, TFile } from 'obsidian';
+import RolloverTodosPlugin from 'main';
+import { Setting, PluginSettingTab, TFile } from 'obsidian';
 import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
 
 export default class RolloverSettingTab extends PluginSettingTab {
-	constructor(app: App, plugin: Plugin) {
-		super(app, plugin);
+	plugin: RolloverTodosPlugin;
+
+	constructor(plugin: RolloverTodosPlugin) {
+		super(plugin.app, plugin);
 		this.plugin = plugin;
 	}
 
