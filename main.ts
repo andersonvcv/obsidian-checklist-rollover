@@ -7,30 +7,15 @@ import {
 	addUndoRolloverCommand
 } from 'src/helpers/obsidianHelper';
 
-const DEFAULT_SETTINGS: RolloverSettings = {
-	templateHeading: 'none',
-	deleteOnComplete: false,
-	removeEmptyTodos: false,
-	rolloverChildren: false,
-	rolloverOnFileCreate: true
-};
-
 export default class RolloverTodosPlugin extends Plugin {
 	settings: RolloverSettings;
 	undoHistory: any[] = [];
 	undoHistoryTime: Date = new Date();
 
-	async loadSettings() {
-		this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-
 	async onload() {
-		await this.loadSettings();
-		this.addSettingTab(new RolloverSettingTab(this));
+		const settingsTab = new RolloverSettingTab(this);
+		await settingsTab.loadSettings();
+		this.addSettingTab(settingsTab);
 
 		addRolloverOnDailyAutomaticNoteCreation(this);
 

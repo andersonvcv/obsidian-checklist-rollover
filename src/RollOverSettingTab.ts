@@ -1,6 +1,15 @@
 import RolloverTodosPlugin from 'main';
 import { Setting, PluginSettingTab, TFile } from 'obsidian';
 import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
+import { RolloverSettings } from './Settings';
+
+const DEFAULT_SETTINGS: RolloverSettings = {
+	templateHeading: 'none',
+	deleteOnComplete: false,
+	removeEmptyTodos: false,
+	rolloverChildren: false,
+	rolloverOnFileCreate: true
+};
 
 export default class RolloverSettingTab extends PluginSettingTab {
 	plugin: RolloverTodosPlugin;
@@ -21,8 +30,10 @@ export default class RolloverSettingTab extends PluginSettingTab {
 			.addDropdown(dropdown =>
 				dropdown
 					.addOptions({
-						...templateHeadings.reduce((acc, heading) => {
-							acc[heading] = heading;
+						...templateHeadings.reduce((acc: { [key: string]: string }, heading) => {
+							const trimmedHeading = heading.replace(/^#+\s/, '');
+							acc[trimmedHeading] = trimmedHeading;
+							console.log(`acc: ${JSON.stringify(acc)}`);
 							return acc;
 						}, {}),
 						none: 'None'
@@ -30,7 +41,7 @@ export default class RolloverSettingTab extends PluginSettingTab {
 					.setValue(this.plugin?.settings.templateHeading)
 					.onChange(value => {
 						this.plugin.settings.templateHeading = value;
-						this.plugin.saveSettings();
+						this.saveSettings();
 					})
 			);
 
@@ -42,7 +53,7 @@ export default class RolloverSettingTab extends PluginSettingTab {
 			.addToggle(toggle =>
 				toggle.setValue(this.plugin.settings.deleteOnComplete || false).onChange(value => {
 					this.plugin.settings.deleteOnComplete = value;
-					this.plugin.saveSettings();
+					this.saveSettings();
 				})
 			);
 
@@ -52,7 +63,7 @@ export default class RolloverSettingTab extends PluginSettingTab {
 			.addToggle(toggle =>
 				toggle.setValue(this.plugin.settings.removeEmptyTodos || false).onChange(value => {
 					this.plugin.settings.removeEmptyTodos = value;
-					this.plugin.saveSettings();
+					this.saveSettings();
 				})
 			);
 
@@ -64,7 +75,7 @@ export default class RolloverSettingTab extends PluginSettingTab {
 			.addToggle(toggle =>
 				toggle.setValue(this.plugin.settings.rolloverChildren || false).onChange(value => {
 					this.plugin.settings.rolloverChildren = value;
-					this.plugin.saveSettings();
+					this.saveSettings();
 				})
 			);
 
@@ -83,13 +94,21 @@ export default class RolloverSettingTab extends PluginSettingTab {
 					.onChange(value => {
 						console.log(value);
 						this.plugin.settings.rolloverOnFileCreate = value;
-						this.plugin.saveSettings();
+						this.saveSettings();
 						this.plugin.loadData().then(value => console.log(value));
 					})
 			);
 	}
 
 	addTemplateHeadingSelectionOption() {}
+
+	async loadSettings() {
+		this.plugin.settings = { ...DEFAULT_SETTINGS, ...(await this.plugin.loadData()) };
+	}
+
+	async saveSettings() {
+		await this.plugin.saveData(this.plugin.settings);
+	}
 
 	async getTemplateHeadings() {
 		const { template } = getDailyNoteSettings();
