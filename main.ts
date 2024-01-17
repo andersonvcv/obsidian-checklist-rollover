@@ -6,7 +6,7 @@ import { getTodos } from './src/get-todos';
 import { RolloverSettings } from 'src/Settings';
 import { getLastDailyNote, isDailyNotesEnabled } from 'src/dailyNotesHelper';
 import { isPeriodicNotesEnabled } from 'src/periodicNotesHelper';
-import { formatWithTrailingSlash, trimSlashes } from 'src/fileHelper';
+import { trimSlashes } from 'src/fileHelper';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
 const DEFAULT_SETTINGS: RolloverSettings = {
