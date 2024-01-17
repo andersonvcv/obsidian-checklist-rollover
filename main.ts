@@ -1,21 +1,27 @@
 import { Notice, Plugin } from 'obsidian';
 import { getDailyNoteSettings, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
-import UndoModal from './UndoModal';
-import RolloverSettingTab from './RollOverSettingTab';
-import { getTodos } from './get-todos';
+import UndoModal from './src/UndoModal';
+import RolloverSettingTab from './src/RollOverSettingTab';
+import { getTodos } from './src/get-todos';
+import { RolloverSettings } from 'src/Settings';
+import { getLastDailyNote, isDailyNotesEnabled } from 'src/dailyNotesHelper';
+import { isPeriodicNotesEnabled } from 'src/periodicNotesHelper';
+import { formatWithTrailingSlash, trimSlashes } from 'src/fileHelper';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
+const DEFAULT_SETTINGS: RolloverSettings = {
+	templateHeading: 'none',
+	deleteOnComplete: false,
+	removeEmptyTodos: false,
+	rolloverChildren: false,
+	rolloverOnFileCreate: true
+};
 
 export default class RolloverTodosPlugin extends Plugin {
+	settings: RolloverSettings;
+	
 	async loadSettings() {
-		const DEFAULT_SETTINGS = {
-			templateHeading: 'none',
-			deleteOnComplete: false,
-			removeEmptyTodos: false,
-			rolloverChildren: false,
-			rolloverOnFileCreate: true
-		};
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = {...DEFAULT_SETTINGS, ...await this.loadData()};
 	}
 
 	async saveSettings() {
@@ -23,54 +29,7 @@ export default class RolloverTodosPlugin extends Plugin {
 	}
 
 	isDailyNotesEnabled() {
-		const dailyNotesPlugin = this.app.internalPlugins.plugins['daily-notes'];
-		const dailyNotesEnabled = dailyNotesPlugin && dailyNotesPlugin.enabled;
-
-		const periodicNotesPlugin = this.app.plugins.getPlugin('periodic-notes');
-		const periodicNotesEnabled = periodicNotesPlugin && periodicNotesPlugin.settings?.daily?.enabled;
-
-		return dailyNotesEnabled || periodicNotesEnabled;
-	}
-
-	getLastDailyNote() {
-		const { moment } = window;
-		let { folder, format } = getDailyNoteSettings();
-
-		folder = this.getCleanFolder(folder);
-		folder = folder.length === 0 ? folder : folder + '/';
-
-		const dailyNoteRegexMatch = new RegExp('^' + folder + '(.*).md$');
-		const todayMoment = moment();
-
-		// get all notes in directory that aren't null
-		const dailyNoteFiles = this.app.vault
-			.getMarkdownFiles()
-			.filter(file => file.path.startsWith(folder))
-			.filter(file => moment(file.path.replace(dailyNoteRegexMatch, '$1'), format, true).isValid())
-			.filter(file => file.basename)
-			.filter(file => this.getFileMoment(file, folder, format).isSameOrBefore(todayMoment, 'day'));
-
-		// sort by date
-		const sorted = dailyNoteFiles.sort(
-			(a, b) => this.getFileMoment(b, folder, format).valueOf() - this.getFileMoment(a, folder, format).valueOf()
-		);
-		return sorted[1];
-	}
-
-	getFileMoment(file, folder, format) {
-		let path = file.path;
-
-		if (path.startsWith(folder)) {
-			// Remove length of folder from start of path
-			path = path.substring(folder.length);
-		}
-
-		if (path.endsWith(`.${file.extension}`)) {
-			// Remove length of file extension from end of path
-			path = path.substring(0, path.length - file.extension.length - 1);
-		}
-
-		return moment(path, format);
+		return isDailyNotesEnabled(this.app) || isPeriodicNotesEnabled(this.app);
 	}
 
 	async getAllUnfinishedTodos(file) {
@@ -93,20 +52,6 @@ export default class RolloverTodosPlugin extends Plugin {
 		}
 	}
 
-	getCleanFolder(folder) {
-		// Check if user defined folder with root `/` e.g. `/dailies`
-		if (folder.startsWith('/')) {
-			folder = folder.substring(1);
-		}
-
-		// Check if user defined folder with trailing `/` e.g. `dailies/`
-		if (folder.endsWith('/')) {
-			folder = folder.substring(0, folder.length - 1);
-		}
-
-		return folder;
-	}
-
 	async rollover(file = undefined) {
 		console.log('rolling over');
 		/*** First we check if the file created is actually a valid daily note ***/
@@ -121,7 +66,7 @@ export default class RolloverTodosPlugin extends Plugin {
 		}
 		if (!file) return;
 
-		folder = this.getCleanFolder(folder);
+		folder = trimSlashes(folder);
 
 		// is a daily note
 		if (!file.path.startsWith(folder)) return;
@@ -145,7 +90,7 @@ export default class RolloverTodosPlugin extends Plugin {
 			const { templateHeading, deleteOnComplete, removeEmptyTodos } = this.settings;
 
 			// check if there is a daily note from yesterday
-			const lastDailyNote = this.getLastDailyNote();
+			const lastDailyNote = getLastDailyNote(this.app);
 			if (!lastDailyNote) return;
 
 			// TODO: Rollover to subheadings (optional)
