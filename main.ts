@@ -1,8 +1,7 @@
 import { Plugin } from 'obsidian';
-import UndoModal from './src/UndoModal';
 import RolloverSettingTab from './src/RollOverSettingTab';
 import { RolloverSettings } from 'src/Settings';
-import { addRolloverNowCommand } from 'src/obsidianHelper';
+import { addRolloverNowCommand, addUndoRolloverCommand } from 'src/obsidianHelper';
 import { rollover } from 'src/RollOverHelper';
 
 const DEFAULT_SETTINGS: RolloverSettings = {
@@ -41,27 +40,6 @@ export default class RolloverTodosPlugin extends Plugin {
 			})
 		);
 		addRolloverNowCommand(this);
-
-		this.addCommand({
-			id: 'obsidian-rollover-daily-todos-undo',
-			name: 'Undo last rollover',
-			checkCallback: checking => {
-				// no history, don't allow undo
-				if (this.undoHistory.length > 0) {
-					const now = window.moment();
-					const lastUse = window.moment(this.undoHistoryTime);
-					const diff = now.diff(lastUse, 'seconds');
-					// 2+ mins since use: don't allow undo
-					if (diff > 2 * 60) {
-						return false;
-					}
-					if (!checking) {
-						new UndoModal(this).open();
-					}
-					return true;
-				}
-				return false;
-			}
-		});
+		addUndoRolloverCommand(this);
 	}
 }
