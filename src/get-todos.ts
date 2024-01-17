@@ -11,6 +11,7 @@ class TodoParser {
 	constructor(lines, withChildren) {
 		this.#lines = lines;
 		this.#withChildren = withChildren;
+		console.log(`withChildren ${this.#withChildren}`);
 	}
 
 	// Returns true if string s is a todo-item

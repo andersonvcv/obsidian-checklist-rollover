@@ -1,18 +1,18 @@
 import { App, Notice, Plugin } from 'obsidian';
 import { getDailyNoteSettings, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
 import { getLastDailyNote } from 'src/helpers/dailyNotesHelper';
-import { trimSlashes } from 'src/helpers/fileHelper';
 import { isDailyNotesEnabled } from 'src/helpers/dailyNotesHelper';
 import { isPeriodicNotesEnabled } from './periodicNotesHelper';
 import { getTodos } from '../get-todos';
 import RolloverTodosPlugin from 'main';
+import { trimSlashes } from './stringHelper';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
 
 export const rollover = async (plugin: RolloverTodosPlugin, file = undefined) => {
-	console.log('rolling over');
-	/*** First we check if the file created is actually a valid daily note ***/
-	let { folder, format } = getDailyNoteSettings();
+	const dailyNoteSettings = getDailyNoteSettings();
+	let { folder } = dailyNoteSettings;
+	const { format } = dailyNoteSettings;
 	let ignoreCreationTime = false;
 
 	// Rollover can be called, but we need to get the daily file

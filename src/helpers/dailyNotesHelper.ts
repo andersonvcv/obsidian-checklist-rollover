@@ -1,6 +1,6 @@
 import { App } from 'obsidian';
 import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
-import { formatWithTrailingSlash } from './fileHelper';
+import { formatWithTrailingSlash } from './stringHelper';
 
 export const isDailyNotesEnabled = (app: App): boolean => {
 	const dailyNotesPlugin = app.internalPlugins.plugins['daily-notes'];
