@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
 import { getPreviousDailyNote, getTodaysNote } from 'src/helpers/dailyNotesHelper';
 import { isDailyNotesEnabled } from 'src/helpers/dailyNotesHelper';
 import RolloverTodosPlugin from 'main';
@@ -59,7 +59,7 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 	plugin.undoHistory = [undoHistoryInstance];
 };
 
-const filterYesterdaysTodos = (plugin: Plugin, todos_yesterday: any[]): [number, number, any[]] => {
+const filterYesterdaysTodos = (plugin: RolloverTodosPlugin, todos_yesterday: any[]): [number, number, any[]] => {
 	let todosAdded = 0;
 	let emptiesToNotAddToTomorrow = 0;
 	const todos_today = !plugin.settings.removeEmptyTodos ? todos_yesterday : [];
@@ -80,7 +80,7 @@ const filterYesterdaysTodos = (plugin: Plugin, todos_yesterday: any[]): [number,
 };
 
 const rollOverTodaysContent = async (
-	plugin: Plugin,
+	plugin: RolloverTodosPlugin,
 	todos_today: any[],
 	undoHistoryInstance: UndoHistory,
 	todayNote: TFile
@@ -120,7 +120,7 @@ const rollOverTodaysContent = async (
 };
 
 const deleteOnComplete = async (
-	plugin: Plugin,
+	plugin: RolloverTodosPlugin,
 	lastDailyNote: TFile,
 	undoHistoryInstance: UndoHistory,
 	todos_yesterday: any[]
@@ -145,7 +145,7 @@ const deleteOnComplete = async (
 };
 
 const notifyUser = (
-	plugin: Plugin,
+	plugin: RolloverTodosPlugin,
 	todosAdded: number,
 	emptiesToNotAddToTomorrow: number,
 	templateHeadingNotFoundMessage: string
