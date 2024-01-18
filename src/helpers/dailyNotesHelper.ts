@@ -1,5 +1,5 @@
 import { App } from 'obsidian';
-import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
+import { getAllDailyNotes, getDailyNote, getDailyNoteSettings } from 'obsidian-daily-notes-interface';
 import { formatWithTrailingSlash } from './stringHelper';
 
 export const isDailyNotesEnabled = (app: App): boolean => {
@@ -7,26 +7,22 @@ export const isDailyNotesEnabled = (app: App): boolean => {
 	return dailyNotesPlugin?.enabled;
 };
 
-export const getLastDailyNote = (app: App) => {
+export const getPreviousDailyNote = (app: App) => {
 	const { moment } = window;
+
 	const dailyNoteSettings = getDailyNoteSettings();
 	const format = dailyNoteSettings.format;
 	let folder = dailyNoteSettings.folder;
-	console.log(`folder: ${folder}`);
 
 	folder = formatWithTrailingSlash(folder);
-	console.log(`folder: ${folder}`);
-
-	const dailyNoteRegexMatch = new RegExp('^' + folder + '(.*).md$');
-	const todayMoment = moment();
-
-	// get all notes in directory that aren't null
+	const allNotesInDailyNotesFolder = new RegExp('^' + folder + '(.*).md$');
+	//TODO: use getAllDailyNotes() instead of this
 	const dailyNoteFiles = app.vault
 		.getMarkdownFiles()
 		.filter(file => file.path.startsWith(folder))
-		.filter(file => moment(file.path.replace(dailyNoteRegexMatch, '$1'), format, true).isValid())
+		.filter(file => moment(file.path.replace(allNotesInDailyNotesFolder, '$1'), format, true).isValid())
 		.filter(file => file.basename)
-		.filter(file => getFileMoment(file, folder, format).isSameOrBefore(todayMoment, 'day'));
+		.filter(file => getFileMoment(file, folder, format).isSameOrBefore(moment(), 'day'));
 
 	// sort by date
 	const sorted = dailyNoteFiles.sort(
@@ -49,4 +45,8 @@ const getFileMoment = (file, folder, format) => {
 	}
 
 	return moment(path, format);
+};
+
+export const getTodaysNote = () => {
+	return getDailyNote(window.moment(), getAllDailyNotes());
 };

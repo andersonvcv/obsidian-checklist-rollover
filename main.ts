@@ -1,7 +1,6 @@
 import { Plugin } from 'obsidian';
 import RolloverSettingTab from './src/RollOverSettingTab';
 import { RolloverSettings } from 'src/Settings';
-import { addRolloverOnDailyNoteCreationEvent } from 'src/helpers/eventsHelper';
 import { addRolloverNowCommand, addUndoRolloverCommand } from 'src/helpers/commandPalletHelper';
 
 export default class RolloverTodosPlugin extends Plugin {
@@ -14,9 +13,6 @@ export default class RolloverTodosPlugin extends Plugin {
 		const settingsTab = new RolloverSettingTab(this);
 		await settingsTab.loadSettings();
 		this.addSettingTab(settingsTab);
-
-		// Events
-		addRolloverOnDailyNoteCreationEvent(this);
 
 		// Command pallet actions
 		addRolloverNowCommand(this);

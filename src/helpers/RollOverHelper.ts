@@ -1,37 +1,16 @@
 import { App, Notice, Plugin } from 'obsidian';
-import { getDailyNoteSettings, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
-import { getLastDailyNote } from 'src/helpers/dailyNotesHelper';
+import { getPreviousDailyNote, getTodaysNote } from 'src/helpers/dailyNotesHelper';
 import { isDailyNotesEnabled } from 'src/helpers/dailyNotesHelper';
 import { isPeriodicNotesEnabled } from './periodicNotesHelper';
 import { getTodos } from '../get-todos';
 import RolloverTodosPlugin from 'main';
-import { trimSlashes } from './stringHelper';
-
-const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
 
 export const rollover = async (plugin: RolloverTodosPlugin) => {
-	const file = getDailyNote(window.moment(), getAllDailyNotes());
-	const ignoreCreationTime = true;
-
-	if (!file) return;
-
-	const dailyNoteSettings = getDailyNoteSettings();
-	let { folder } = dailyNoteSettings;
-	const { format } = dailyNoteSettings;
-
-	folder = trimSlashes(folder);
-
-	// is a daily note
-	if (!file.path.startsWith(folder)) return;
-
-	// is today's daily note
-	const today = new Date();
-	const todayFormatted = window.moment(today).format(format);
-	const filePathConstructed = `${folder}${folder == '' ? '' : '/'}${todayFormatted}.${file.extension}`;
-	if (filePathConstructed !== file.path) return;
-
-	// was just created
-	if (today.getTime() - file.stat.ctime > MAX_TIME_SINCE_CREATION && !ignoreCreationTime) return;
+	const todayNote = getTodaysNote();
+	if (!todayNote) {
+		new Notice("Rollover Todo's can only roll over to today's note.");
+		return;
+	}
 
 	/*** Next, if it is a valid daily note, but we don't have daily notes enabled, we must alert the user ***/
 	if (!isDailyNotesEnabledd(plugin.app)) {
@@ -43,7 +22,7 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		const { templateHeading, deleteOnComplete, removeEmptyTodos } = plugin.settings;
 
 		// check if there is a daily note from yesterday
-		const lastDailyNote = getLastDailyNote(plugin.app);
+		const lastDailyNote = getPreviousDailyNote(plugin.app);
 		if (!lastDailyNote) return;
 
 		// get unfinished todos from yesterday, if exist
@@ -90,9 +69,9 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		const templateHeadingSelected = templateHeading !== 'none';
 
 		if (todos_today.length > 0) {
-			let dailyNoteContent = await plugin.app.vault.read(file);
+			let dailyNoteContent = await plugin.app.vault.read(todayNote);
 			undoHistoryInstance.today = {
-				file: file,
+				file: todayNote,
 				oldContent: `${dailyNoteContent}`
 			};
 			const todos_todayString = `\n${todos_today.join('\n')}`;
@@ -115,7 +94,7 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 				dailyNoteContent += todos_todayString;
 			}
 
-			await plugin.app.vault.modify(file, dailyNoteContent);
+			await plugin.app.vault.modify(todayNote, dailyNoteContent);
 		}
 
 		// if deleteOnComplete, get yesterday's content and modify it
@@ -165,10 +144,6 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		plugin.undoHistory = [undoHistoryInstance];
 	}
 };
-
-// const getDailyNote = () => {
-
-// }
 
 const isDailyNotesEnabledd = (app: App) => {
 	return isDailyNotesEnabled(app) || isPeriodicNotesEnabled(app);
