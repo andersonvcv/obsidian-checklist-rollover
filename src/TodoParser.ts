@@ -3,9 +3,9 @@ export default class TodoParser {
 	private contentSplittedByLines: string[];
 	private rolloverChildren: boolean;
 
-	constructor(content: string[], withChildren: boolean) {
-		this.contentSplittedByLines = content;
-		this.rolloverChildren = withChildren;
+	constructor(content: string, rolloverChildren: boolean) {
+		this.contentSplittedByLines = content.split(/\r?\n|\r|\n/g);
+		this.rolloverChildren = rolloverChildren;
 	}
 
 	private isTodo(line: string) {
@@ -18,33 +18,30 @@ export default class TodoParser {
 			return false;
 		}
 
-		const indCurr = this.getIndentation(lineNumber);
-		console.log(`indCurr: ${indCurr}`);
-		const indNext = this.getIndentation(lineNumber + 1);
-		console.log(`indNext: ${indNext}`);
-		if (indNext > indCurr) {
+		const currentLineIdentationNumber = this.getIndentation(lineNumber);
+		const nextLineIdentationNumber = this.getIndentation(lineNumber + 1);
+		if (nextLineIdentationNumber > currentLineIdentationNumber) {
 			return true;
 		}
+
 		return false;
 	}
 
-	// Returns a list of strings that are the nested items after line `parentLinum`
-	private getChildren(parentLinum) {
+	private getChildren(parentLine: number) {
 		const children = [];
-		let nextLinum = parentLinum + 1;
-		while (this.isChildOf(parentLinum, nextLinum)) {
-			children.push(this.contentSplittedByLines[nextLinum]);
-			nextLinum++;
+		let inspectedLine = parentLine + 1;
+		while (this.isChildOf(parentLine, inspectedLine)) {
+			children.push(this.contentSplittedByLines[inspectedLine]);
+			inspectedLine++;
 		}
 		return children;
 	}
 
-	// Returns true if line `linum` has more indentation than line `parentLinum`
-	private isChildOf(parentLinum, linum) {
-		if (parentLinum >= this.contentSplittedByLines.length || linum >= this.contentSplittedByLines.length) {
+	private isChildOf(parentLine: number, line: number) {
+		if (parentLine >= this.contentSplittedByLines.length || line >= this.contentSplittedByLines.length) {
 			return false;
 		}
-		return this.getIndentation(linum) > this.getIndentation(parentLinum);
+		return this.getIndentation(line) > this.getIndentation(parentLine);
 	}
 
 	private getIndentation(lineNumber: number) {
@@ -52,32 +49,19 @@ export default class TodoParser {
 	}
 
 	getTodos() {
-		let todos = [];
-		for (let l = 0; l < this.contentSplittedByLines.length; l++) {
-			const line = this.contentSplittedByLines[l];
-			if (this.isTodo(line)) {
-				todos.push(line);
-				if (this.rolloverChildren && this.hasChildren(l)) {
-					const cs = this.getChildren(l);
-					todos = [...todos, ...cs];
-					l += cs.length;
-				}
-			}
-		}
-
-		let inspectedLine = 0;
-		for (const line of this.contentSplittedByLines) {
+		const todos: string[] = [];
+		this.contentSplittedByLines.forEach((line, inspectedLine) => {
 			if (!this.isTodo(line)) {
-				continue;
+				return;
 			}
 
 			todos.push(line);
 			if (this.rolloverChildren && this.hasChildren(inspectedLine)) {
-				const cs = this.getChildren(inspectedLine);
-				todos = [...todos, ...cs];
-				inspectedLine += cs.length;
+				const childrenLines = this.getChildren(inspectedLine);
+				todos.push(...childrenLines);
+				inspectedLine += childrenLines.length;
 			}
-		}
+		});
 
 		return todos;
 	}

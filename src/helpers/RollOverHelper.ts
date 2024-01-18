@@ -2,7 +2,7 @@ import { Notice, TFile } from 'obsidian';
 import { getPreviousDailyNote, getTodaysNote } from 'src/helpers/dailyNotesHelper';
 import { isDailyNotesEnabled } from 'src/helpers/dailyNotesHelper';
 import RolloverTodosPlugin from 'main';
-import { getAllUnfinishedTodos } from './todosHelper';
+import { getLastDailyNoteUnfinishedTodos } from './todosHelper';
 import { UndoHistory } from 'src/models/UndoHistory';
 
 export const rollover = async (plugin: RolloverTodosPlugin) => {
@@ -12,14 +12,17 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		return;
 	}
 
-	const lastDailyNoteTodos = await getAllUnfinishedTodos(plugin, lastDailyNote);
-
-	if (lastDailyNoteTodos.length == 0) {
+	const lastDailyNoteUnfinishedTodos = await getLastDailyNoteUnfinishedTodos(plugin, lastDailyNote);
+	if (lastDailyNoteUnfinishedTodos.length == 0) {
 		new Notice('Nothing to be rolled over.', 10000);
 		return;
 	}
 
-	// setup undo history
+	let lastDailyFilteredTodos: string[] = lastDailyNoteUnfinishedTodos;
+	if (plugin.settings.removeEmptyTodos) {
+		lastDailyFilteredTodos = filterYesterdaysTodos(lastDailyNoteUnfinishedTodos);
+	}
+
 	const undoHistoryInstance: UndoHistory = {
 		previousDay: {
 			file: undefined,
@@ -31,17 +34,11 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		}
 	};
 
-	const [todosAdded, emptiesToNotAddToTomorrow, todos_today] = filterYesterdaysTodos(plugin, lastDailyNoteTodos);
+	await rollOverTodaysContent(plugin, lastDailyFilteredTodos, undoHistoryInstance, todayNote);
 
-	const templateHeadingNotFoundMessage = await rollOverTodaysContent(
-		plugin,
-		todos_today,
-		undoHistoryInstance,
-		todayNote
-	);
-	await deleteOnComplete(plugin, lastDailyNote, undoHistoryInstance, lastDailyNoteTodos);
-
-	notifyUser(plugin, todosAdded, emptiesToNotAddToTomorrow, templateHeadingNotFoundMessage);
+	if (plugin.settings.deleteOnComplete) {
+		await deleteOnComplete(plugin, lastDailyNote, undoHistoryInstance, lastDailyNoteUnfinishedTodos);
+	}
 
 	plugin.undoHistoryTime = new Date();
 	plugin.undoHistory = [undoHistoryInstance];
@@ -66,118 +63,96 @@ const canRollOver = (plugin: RolloverTodosPlugin, todayNote: TFile, lastDailyNot
 	return true;
 };
 
-const filterYesterdaysTodos = (plugin: RolloverTodosPlugin, todos_yesterday: any[]): [number, number, any[]] => {
+const filterYesterdaysTodos = (lastDailyNoteUnfinishedTodos: string[]): string[] => {
 	let todosAdded = 0;
 	let emptiesToNotAddToTomorrow = 0;
-	const todos_today = !plugin.settings.removeEmptyTodos ? todos_yesterday : [];
-	if (plugin.settings.removeEmptyTodos) {
-		todos_yesterday.forEach((line, i) => {
-			const trimmedLine = (line || '').trim();
-			if (trimmedLine != '- [ ]' && trimmedLine != '- [  ]') {
-				todos_today.push(line);
-				todosAdded++;
-			} else {
-				emptiesToNotAddToTomorrow++;
-			}
-		});
-	} else {
-		todosAdded = todos_yesterday.length;
+	const filteredTodos: string[] = [];
+	lastDailyNoteUnfinishedTodos.forEach((todo, i) => {
+		const trimmedTodo = (todo || '').trim();
+		if (trimmedTodo != '- [ ]' && trimmedTodo != '- [  ]') {
+			filteredTodos.push(todo);
+			todosAdded++;
+		} else {
+			emptiesToNotAddToTomorrow++;
+		}
+	});
+
+	if (todosAdded > 0) {
+		new Notice(`- ${todosAdded} todo${todosAdded > 1 ? 's' : ''} rolled over.`, 1000);
 	}
-	return [todosAdded, emptiesToNotAddToTomorrow, todos_today];
+
+	if (emptiesToNotAddToTomorrow > 0) {
+		new Notice(`- ${emptiesToNotAddToTomorrow} empty todo${emptiesToNotAddToTomorrow > 1 ? 's' : ''} removed.`, 1000);
+	}
+
+	return filteredTodos;
 };
 
 const rollOverTodaysContent = async (
 	plugin: RolloverTodosPlugin,
-	todos_today: any[],
+	lastDailyFilteredTodos: string[],
 	undoHistoryInstance: UndoHistory,
 	todayNote: TFile
-): Promise<string> => {
-	let templateHeadingNotFoundMessage = '';
-	const templateHeadingSelected = plugin.settings.templateHeading !== 'none';
-
-	if (todos_today.length > 0) {
-		let dailyNoteContent = await plugin.app.vault.read(todayNote);
-		undoHistoryInstance.today = {
-			file: todayNote,
-			oldContent: `${dailyNoteContent}`
-		};
-		const todos_todayString = `\n${todos_today.join('\n')}`;
-
-		// If template heading is selected, try to rollover to template heading
-		if (templateHeadingSelected) {
-			const contentAddedToHeading = dailyNoteContent.replace(
-				plugin.settings.templateHeading,
-				`${plugin.settings.templateHeading}${todos_todayString}`
-			);
-			if (contentAddedToHeading == dailyNoteContent) {
-				templateHeadingNotFoundMessage = `Rollover couldn't find '${plugin.settings.templateHeading}' in today's daily not. Rolling todos to end of file.`;
-			} else {
-				dailyNoteContent = contentAddedToHeading;
-			}
-		}
-
-		// Rollover to bottom of file if no heading found in file, or no heading selected
-		if (!templateHeadingSelected || templateHeadingNotFoundMessage.length > 0) {
-			dailyNoteContent += todos_todayString;
-		}
-
-		await plugin.app.vault.modify(todayNote, dailyNoteContent);
+) => {
+	if (lastDailyFilteredTodos.length == 0) {
+		new Notice('No todos to rollover.', 10000);
+		return;
 	}
-	return templateHeadingNotFoundMessage;
+
+	let todayNoteContent = await plugin.app.vault.read(todayNote);
+
+	undoHistoryInstance.today = {
+		file: todayNote,
+		oldContent: todayNoteContent
+	};
+
+	const lastDailyFilteredTodosString = `\n${lastDailyFilteredTodos.join('\n')}`;
+	if (isRollOverToHeading(plugin)) {
+		const contentAddedToHeading = todayNoteContent.replace(
+			plugin.settings.templateHeading,
+			`${plugin.settings.templateHeading}${lastDailyFilteredTodosString}`
+		);
+
+		// Replace didn't found heading
+		if (contentAddedToHeading == todayNoteContent) {
+			todayNoteContent += lastDailyFilteredTodosString;
+			new Notice(
+				`Rollover couldn't find '${plugin.settings.templateHeading}' in today's daily not. Rolling todos to end of file.`,
+				10000
+			);
+		} else {
+			todayNoteContent = contentAddedToHeading;
+		}
+	} else {
+		todayNoteContent += lastDailyFilteredTodosString;
+	}
+
+	await plugin.app.vault.modify(todayNote, todayNoteContent);
 };
 
 const deleteOnComplete = async (
 	plugin: RolloverTodosPlugin,
 	lastDailyNote: TFile,
 	undoHistoryInstance: UndoHistory,
-	todos_yesterday: any[]
+	lastDailyNoteUnfinishedTodos: string[]
 ) => {
-	if (plugin.settings.deleteOnComplete) {
-		const lastDailyNoteContent = await plugin.app.vault.read(lastDailyNote);
-		undoHistoryInstance.previousDay = {
-			file: lastDailyNote,
-			oldContent: `${lastDailyNoteContent}`
-		};
-		const lines = lastDailyNoteContent.split('\n');
+	const lastDailyNoteContent = await plugin.app.vault.read(lastDailyNote);
+	undoHistoryInstance.previousDay = {
+		file: lastDailyNote,
+		oldContent: `${lastDailyNoteContent}`
+	};
+	const lines = lastDailyNoteContent.split('\n');
 
-		for (let i = lines.length; i >= 0; i--) {
-			if (todos_yesterday.includes(lines[i])) {
-				lines.splice(i, 1);
-			}
+	for (let i = lines.length; i >= 0; i--) {
+		if (lastDailyNoteUnfinishedTodos.includes(lines[i])) {
+			lines.splice(i, 1);
 		}
-
-		const modifiedContent = lines.join('\n');
-		await plugin.app.vault.modify(lastDailyNote, modifiedContent);
 	}
+
+	const modifiedContent = lines.join('\n');
+	await plugin.app.vault.modify(lastDailyNote, modifiedContent);
 };
 
-const notifyUser = (
-	plugin: RolloverTodosPlugin,
-	todosAdded: number,
-	emptiesToNotAddToTomorrow: number,
-	templateHeadingNotFoundMessage: string
-) => {
-	const todosAddedString = todosAdded == 0 ? '' : `- ${todosAdded} todo${todosAdded > 1 ? 's' : ''} rolled over.`;
-	const emptiesToNotAddToTomorrowString =
-		emptiesToNotAddToTomorrow == 0
-			? ''
-			: plugin.settings.deleteOnComplete
-			? `- ${emptiesToNotAddToTomorrow} empty todo${emptiesToNotAddToTomorrow > 1 ? 's' : ''} removed.`
-			: '';
-	const part1 = templateHeadingNotFoundMessage.length > 0 ? `${templateHeadingNotFoundMessage}` : '';
-	const part2 = `${todosAddedString}${todosAddedString.length > 0 ? ' ' : ''}`;
-	const part3 = `${emptiesToNotAddToTomorrowString}${emptiesToNotAddToTomorrowString.length > 0 ? ' ' : ''}`;
-
-	const allParts = [part1, part2, part3];
-	const nonBlankLines: any[] = [];
-	allParts.forEach(part => {
-		if (part.length > 0) {
-			nonBlankLines.push(part);
-		}
-	});
-
-	const message = nonBlankLines.join('\n');
-	if (message.length > 0) {
-		new Notice(message, 4000 + message.length * 3);
-	}
+const isRollOverToHeading = (plugin: RolloverTodosPlugin): boolean => {
+	return plugin.settings.templateHeading !== 'none';
 };

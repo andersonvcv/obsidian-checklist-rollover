@@ -1,6 +1,6 @@
 import RolloverTodosPlugin from 'main';
 import { rollover } from './helpers/rollOverHelper';
-import UndoModal from './UndoModal';
+import UndoModal from './undoModal';
 
 export default class CommandPallet {
 	plugin: RolloverTodosPlugin;
