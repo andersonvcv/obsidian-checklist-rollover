@@ -1,11 +1,12 @@
 import { Plugin } from 'obsidian';
 import RolloverSettingTab from './src/RollOverSettingTab';
-import { RolloverSettings } from 'src/Settings';
+import { RolloverSettings } from 'src/models/Settings';
 import { addRolloverNowCommand, addUndoRolloverCommand } from 'src/helpers/commandPalletHelper';
+import { UndoHistory } from 'src/models/UndoHistory';
 
 export default class RolloverTodosPlugin extends Plugin {
 	settings: RolloverSettings;
-	undoHistory: any[] = [];
+	undoHistory: UndoHistory[] = [];
 	undoHistoryTime: Date = new Date();
 
 	async onload() {
