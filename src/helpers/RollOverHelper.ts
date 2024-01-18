@@ -7,26 +7,14 @@ import { UndoHistory } from 'src/models/UndoHistory';
 
 export const rollover = async (plugin: RolloverTodosPlugin) => {
 	const todayNote = getTodaysNote();
-	if (!todayNote) {
-		new Notice("Rollover Todo's can only roll over to today's note.", 1000);
-		return;
-	}
-
-	if (!isDailyNotesEnabled(plugin.app)) {
-		new Notice("Please enable Daily Notes to Rollover Todo's work properly.", 10000);
-		return;
-	}
-
 	const lastDailyNote = getPreviousDailyNote(plugin.app);
-	if (!lastDailyNote) {
-		new Notice('You can rollover notes when you have at least two notes.', 10000);
+	if (!canRollOver(plugin, todayNote, lastDailyNote)) {
 		return;
 	}
 
-	const todos_yesterday = await getAllUnfinishedTodos(plugin.app, plugin, lastDailyNote);
-	console.log(`rollover-daily-todos: ${todos_yesterday.length} todos found in ${lastDailyNote.basename}.md`);
+	const lastDailyNoteTodos = await getAllUnfinishedTodos(plugin, lastDailyNote);
 
-	if (todos_yesterday.length == 0) {
+	if (lastDailyNoteTodos.length == 0) {
 		new Notice('Nothing to be rolled over.', 10000);
 		return;
 	}
@@ -43,7 +31,7 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		}
 	};
 
-	const [todosAdded, emptiesToNotAddToTomorrow, todos_today] = filterYesterdaysTodos(plugin, todos_yesterday);
+	const [todosAdded, emptiesToNotAddToTomorrow, todos_today] = filterYesterdaysTodos(plugin, lastDailyNoteTodos);
 
 	const templateHeadingNotFoundMessage = await rollOverTodaysContent(
 		plugin,
@@ -51,12 +39,31 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 		undoHistoryInstance,
 		todayNote
 	);
-	await deleteOnComplete(plugin, lastDailyNote, undoHistoryInstance, todos_yesterday);
+	await deleteOnComplete(plugin, lastDailyNote, undoHistoryInstance, lastDailyNoteTodos);
 
 	notifyUser(plugin, todosAdded, emptiesToNotAddToTomorrow, templateHeadingNotFoundMessage);
 
 	plugin.undoHistoryTime = new Date();
 	plugin.undoHistory = [undoHistoryInstance];
+};
+
+const canRollOver = (plugin: RolloverTodosPlugin, todayNote: TFile, lastDailyNote: TFile): boolean => {
+	if (!todayNote) {
+		new Notice("Rollover Todo's can only roll over to today's note.", 1000);
+		return false;
+	}
+
+	if (!isDailyNotesEnabled(plugin.app)) {
+		new Notice("Please enable Daily Notes to Rollover Todo's work properly.", 10000);
+		return false;
+	}
+
+	if (!lastDailyNote) {
+		new Notice('Rollover notes needs at least two notes.', 10000);
+		return false;
+	}
+
+	return true;
 };
 
 const filterYesterdaysTodos = (plugin: RolloverTodosPlugin, todos_yesterday: any[]): [number, number, any[]] => {

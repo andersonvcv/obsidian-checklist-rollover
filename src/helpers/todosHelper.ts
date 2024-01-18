@@ -1,13 +1,11 @@
 import RolloverTodosPlugin from 'main';
-import { App, TFile } from 'obsidian';
-import { getTodos } from 'src/get-todos';
+import { TFile } from 'obsidian';
+import TodoParser from 'src/TodoParser';
 
-export const getAllUnfinishedTodos = async (app: App, plugin: RolloverTodosPlugin, file: TFile) => {
-	const dn = await app.vault.read(file);
-	const dnLines = dn.split(/\r?\n|\r|\n/g);
+export const getAllUnfinishedTodos = async (plugin: RolloverTodosPlugin, note: TFile) => {
+	const content = await plugin.app.vault.read(note);
+	const contentLines = content.split(/\r?\n|\r|\n/g);
 
-	return getTodos({
-		lines: dnLines,
-		withChildren: plugin.settings.rolloverChildren
-	});
+	const todoParser = new TodoParser(contentLines, plugin.settings.rolloverChildren);
+	return todoParser.getTodos();
 };

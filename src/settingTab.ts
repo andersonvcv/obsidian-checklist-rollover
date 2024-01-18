@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS: RolloverSettings = {
 	rolloverOnFileCreate: true
 };
 
-export default class RolloverSettingTab extends PluginSettingTab {
+export default class SettingTab extends PluginSettingTab {
 	plugin: RolloverTodosPlugin;
 
 	constructor(plugin: RolloverTodosPlugin) {
