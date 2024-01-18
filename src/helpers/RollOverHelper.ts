@@ -9,19 +9,15 @@ import { trimSlashes } from './stringHelper';
 
 const MAX_TIME_SINCE_CREATION = 5000; // 5 seconds
 
-export const rollover = async (plugin: RolloverTodosPlugin, file = undefined) => {
+export const rollover = async (plugin: RolloverTodosPlugin) => {
+	const file = getDailyNote(window.moment(), getAllDailyNotes());
+	const ignoreCreationTime = true;
+
+	if (!file) return;
+
 	const dailyNoteSettings = getDailyNoteSettings();
 	let { folder } = dailyNoteSettings;
 	const { format } = dailyNoteSettings;
-	let ignoreCreationTime = false;
-
-	// Rollover can be called, but we need to get the daily file
-	if (file == undefined) {
-		const allDailyNotes = getAllDailyNotes();
-		file = getDailyNote(window.moment(), allDailyNotes);
-		ignoreCreationTime = true;
-	}
-	if (!file) return;
 
 	folder = trimSlashes(folder);
 
@@ -169,6 +165,10 @@ export const rollover = async (plugin: RolloverTodosPlugin, file = undefined) =>
 		plugin.undoHistory = [undoHistoryInstance];
 	}
 };
+
+// const getDailyNote = () => {
+
+// }
 
 const isDailyNotesEnabledd = (app: App) => {
 	return isDailyNotesEnabled(app) || isPeriodicNotesEnabled(app);
