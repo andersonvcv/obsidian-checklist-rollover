@@ -1,5 +1,5 @@
 export interface RolloverSettings {
 	templateHeading: string;
-	deleteOnComplete: boolean;
+	deleteAfterRolledOver: boolean;
 	rolloverOnFileCreate: boolean;
 }

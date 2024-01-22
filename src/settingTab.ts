@@ -5,7 +5,7 @@ import { getDailyNoteTemplateHeadings } from './helpers/dailyNotesHelper';
 
 const DEFAULT_SETTINGS: RolloverSettings = {
 	templateHeading: 'none',
-	deleteOnComplete: false,
+	deleteAfterRolledOver: false,
 	rolloverOnFileCreate: true
 };
 
@@ -56,8 +56,8 @@ export default class SettingTab extends PluginSettingTab {
 			.setName('Delete todos from previous day')
 			.setDesc(`Delete Todo's after rolled over. There is no undo action for this.`)
 			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.deleteOnComplete).onChange(value => {
-					this.plugin.settings.deleteOnComplete = value;
+				toggle.setValue(this.plugin.settings.deleteAfterRolledOver).onChange(value => {
+					this.plugin.settings.deleteAfterRolledOver = value;
 					this.saveSettings();
 				})
 			);

@@ -18,6 +18,7 @@ export default class Note {
 	}
 
 	rollOver(lastNote: Note) {
+		lastNote.parse();
 		Object.keys(lastNote.todoMap).forEach(key => {
 			const keyTodos = lastNote.todoMap[key];
 			const todosPrint = keyTodos.reduce((acc, curr) => {

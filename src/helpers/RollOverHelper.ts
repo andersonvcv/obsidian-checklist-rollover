@@ -2,18 +2,13 @@ import RolloverTodosPlugin from 'main';
 import Note from 'src/note';
 import TodoParser from 'src/parsers/todoParser';
 import { getPreviousDailyNote, getTodaysNote } from './dailyNotesHelper';
+import { TFile } from 'obsidian';
 
 export const rollover = async (plugin: RolloverTodosPlugin) => {
-	const lastDailyNote = getPreviousDailyNote(plugin.app);
-	const lastDailyNoteContent = await plugin.app.vault.read(lastDailyNote);
-
 	const todoParser = new TodoParser();
-	const lastNote = new Note(todoParser, lastDailyNoteContent);
-	lastNote.parse();
-
 	const todayDailyNote = getTodaysNote();
-	const todayDailyNoteContent = await plugin.app.vault.read(todayDailyNote);
-	const todayNote = new Note(todoParser, todayDailyNoteContent);
+	const lastNote = await createNote(plugin, todoParser, getPreviousDailyNote(plugin.app));
+	const todayNote = await createNote(plugin, todoParser, todayDailyNote);
 
 	if (plugin.settings.templateHeading === 'none') {
 		todayNote.rollOver(lastNote);
@@ -22,4 +17,9 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 	}
 
 	await plugin.app.vault.modify(todayDailyNote, todayNote.content);
+};
+
+const createNote = async (plugin: RolloverTodosPlugin, todoParser: TodoParser, noteFile: TFile) => {
+	const lastDailyNoteContent = await plugin.app.vault.read(noteFile);
+	return new Note(todoParser, lastDailyNoteContent);
 };
