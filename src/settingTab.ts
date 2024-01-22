@@ -1,6 +1,6 @@
 import RolloverTodosPlugin from 'main';
 import { Setting, PluginSettingTab } from 'obsidian';
-import { RolloverSettings } from './models/Settings';
+import { RolloverSettings } from './models/settings';
 import { getDailyNoteTemplateHeadings } from './helpers/fileHelper';
 
 const DEFAULT_SETTINGS: RolloverSettings = {

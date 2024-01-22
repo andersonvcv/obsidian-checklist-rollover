@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
 import SettingTab from './src/settingTab';
-import { RolloverSettings } from 'src/models/Settings';
+import { RolloverSettings } from 'src/models/settings';
 import { UndoHistory } from 'src/models/UndoHistory';
 import CommandPallet from 'src/commandPallet';
 
@@ -16,6 +16,5 @@ export default class RolloverTodosPlugin extends Plugin {
 
 		const commandPallet = new CommandPallet(this);
 		commandPallet.addRolloverNowCommand();
-		commandPallet.addUndoRolloverCommand();
 	}
 }

@@ -12,3 +12,7 @@ export const getDailyNoteTemplateHeadings = async (app: App) => {
 	const templateHeadings = Array.from(templateContent.matchAll(/#{1,} .*/g)).map(([heading]) => heading);
 	return templateHeadings;
 };
+
+export const getIndentation = (line: string) => {
+	return line.search(/\S/);
+}
