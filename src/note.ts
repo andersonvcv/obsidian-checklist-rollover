@@ -28,4 +28,17 @@ export default class Note {
 			this.content = this.content.replace(key, `${key}\n${todosPrint}`);
 		});
 	}
+
+	rollOverToSingleheader(lastNote: Note, templateHeading: string) {
+		let allTodos = '';
+		Object.keys(lastNote.todoMap).forEach(key => {
+			const keyTodos = lastNote.todoMap[key];
+			const todosPrint = keyTodos.reduce((acc, curr) => {
+				acc += curr.toStringRollOver();
+				return acc;
+			}, '');
+			allTodos += `${todosPrint}\n`;
+		});
+		this.content = this.content.replace(templateHeading, `${templateHeading}\n${allTodos}`);
+	}
 }

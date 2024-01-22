@@ -1,7 +1,6 @@
 import { App, TFile } from 'obsidian';
 import { getAllDailyNotes, getDailyNote, getDailyNoteSettings } from 'obsidian-daily-notes-interface';
-import { formatWithTrailingSlash } from './stringHelper';
-import TodoParser from 'src/parsers/todoParser';
+import { formatWithTrailingSlash, isEmpty } from './stringHelper';
 
 export const getPreviousDailyNote = (app: App) => {
 	const { moment } = window;
@@ -40,7 +39,20 @@ export const getDailyNoteTemplateHeadings = async (app: App) => {
 	const templateFile = app.vault.getAbstractFileByPath(templatePath + '.md');
 	const templateContent = await app.vault.read(templateFile as TFile);
 
-	return TodoParser.getTodosHeaders(templateContent.split(/\r?\n|\r|\n/g));
+	return getTodosHeaders(templateContent.split(/\r?\n|\r|\n/g));
+};
+
+const getTodosHeaders = (noteContentLines: string[]): string[] => {
+	const todoHeaders = [];
+	for (let lineNum = 0; lineNum < noteContentLines.length; lineNum++) {
+		const line = noteContentLines[lineNum];
+		if (isEmpty(line)) {
+			continue;
+		}
+
+		todoHeaders.push(line);
+	}
+	return todoHeaders;
 };
 
 const getFileMoment = (file: TFile, folder: string, format: string | undefined) => {

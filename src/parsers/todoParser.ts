@@ -36,17 +36,4 @@ export default class TodoParser {
 		}
 		return todoMap;
 	}
-
-	static getTodosHeaders(noteContentLines: string[]): string[] {
-		const todoHeaders = [];
-		for (let lineNum = 0; lineNum < noteContentLines.length; lineNum++) {
-			const line = noteContentLines[lineNum];
-			if (isEmpty(line)) {
-				continue;
-			}
-
-			todoHeaders.push(line);
-		}
-		return todoHeaders;
-	}
 }

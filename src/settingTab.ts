@@ -27,7 +27,6 @@ export default class SettingTab extends PluginSettingTab {
 
 	async addTemplateHeadingSelection() {
 		const todosHeaders = await getDailyNoteTemplateHeadings(this.app);
-		console.log(`todosHeaders: ${todosHeaders}`);
 
 		new Setting(this.containerEl)
 			.setName('Template heading')
