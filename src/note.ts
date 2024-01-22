@@ -22,7 +22,7 @@ export default class Note {
 		Object.keys(lastNote.todoMap).forEach(key => {
 			const keyTodos = lastNote.todoMap[key];
 			const todosPrint = keyTodos.reduce((acc, curr) => {
-				acc += curr.toString();
+				acc += curr.toStringRollOver();
 				return acc;
 			}, '');
 

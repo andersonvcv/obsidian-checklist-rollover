@@ -59,20 +59,26 @@ export default class Todo {
 		return `${this.content}\n`;
 	}
 
-	hasUncheckedChildren(): boolean {
-		let hasUncheckedChildren = false;
+	toStringRollOver(): string {
 		if (this.hasChildren) {
-			hasUncheckedChildren = this.children.reduce((acc, curr) => {
-				acc = curr.hasUncheckedChildren();
+			const childrenString = this.children.reduce((acc, curr) => {
+				acc += curr.toStringRollOver();
 				return acc;
-			}, false);
+			}, '');
+
+			return this.hasUncheckedChildren() ? `${this.content}\n${childrenString}` : '';
+		}
+		return this.hasUncheckedChildren() ? `${this.content}\n` : '';
+	}
+
+	hasUncheckedChildren(): boolean {
+		for (const child of this.children) {
+			if (child.hasUncheckedChildren()) {
+				return true;
+			}
 		}
 
-		if (!this.isChecked) {
-			return true;
-		}
-
-		return hasUncheckedChildren;
+		return !this.isChecked;
 	}
 
 	private isTodo(line: string, todoFiller: string) {
