@@ -34,8 +34,6 @@ export default class Todo {
 		return this.isTodo(line, uncheckedTodoFilter);
 	};
 
-	findParent(previousTodo: Todo | null) {}
-
 	isChildOf(parent: Todo): boolean {
 		if (this.identationLevel > parent.identationLevel) {
 			return true;

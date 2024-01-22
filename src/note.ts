@@ -29,7 +29,7 @@ export default class Note {
 		});
 	}
 
-	rollOverToSingleheader(lastNote: Note, templateHeading: string) {
+	rollOverToSingleHeader(lastNote: Note, templateHeading: string) {
 		let allTodos = '';
 		Object.keys(lastNote.todoMap).forEach(key => {
 			const keyTodos = lastNote.todoMap[key];

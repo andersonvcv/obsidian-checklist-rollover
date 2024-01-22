@@ -18,7 +18,7 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 	if (plugin.settings.templateHeading === 'none') {
 		todayNote.rollOver(lastNote);
 	} else {
-		todayNote.rollOverToSingleheader(lastNote, plugin.settings.templateHeading);
+		todayNote.rollOverToSingleHeader(lastNote, plugin.settings.templateHeading);
 	}
 
 	await plugin.app.vault.modify(todayDailyNote, todayNote.content);
