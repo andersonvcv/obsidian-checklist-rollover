@@ -68,7 +68,7 @@ export default class Todo {
 
 			return this.hasUncheckedChildren() ? `${this.content}\n${childrenString}` : '';
 		}
-		return this.hasUncheckedChildren() ? `${this.content}\n` : '';
+		return this.hasUncheckedChildren() ? (this.isRoot() ? `${this.content}` : `${this.content}\n`) : '';
 	}
 
 	hasUncheckedChildren(): boolean {

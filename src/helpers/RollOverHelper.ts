@@ -17,5 +17,5 @@ export const rollover = async (plugin: RolloverTodosPlugin) => {
 
 	todayNote.rollOver(lastNote);
 
-	// await plugin.app.vault.modify(todayDailyNote, todayNote.content);
+	await plugin.app.vault.modify(todayDailyNote, todayNote.content);
 };
