@@ -15,7 +15,6 @@ export default class Note {
 
 	parse() {
 		this.todoMap = this.todoParser.parse(this.noteContentLines);
-		console.log(this.todoMap);
 	}
 
 	rollOver(lastNote: Note) {
@@ -27,8 +26,6 @@ export default class Note {
 			}, '');
 
 			this.content = this.content.replace(key, `${key}\n${todosPrint}`);
-			console.log(JSON.stringify(this.content));
 		});
-		console.log(this.content);
 	}
 }

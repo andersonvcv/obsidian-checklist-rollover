@@ -1,7 +1,5 @@
 export interface RolloverSettings {
-	templateHeading: string,
-	deleteOnComplete: boolean,
-	removeEmptyTodos: boolean,
-	rolloverChildren: boolean,
-	rolloverOnFileCreate: boolean
+	templateHeading: string;
+	deleteOnComplete: boolean;
+	rolloverOnFileCreate: boolean;
 }

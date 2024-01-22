@@ -1,6 +1,7 @@
 import { App, TFile } from 'obsidian';
 import { getAllDailyNotes, getDailyNote, getDailyNoteSettings } from 'obsidian-daily-notes-interface';
 import { formatWithTrailingSlash } from './stringHelper';
+import TodoParser from 'src/parsers/todoParser';
 
 export const getPreviousDailyNote = (app: App) => {
 	const { moment } = window;
@@ -21,9 +22,25 @@ export const getPreviousDailyNote = (app: App) => {
 
 	// sort by date
 	const sorted = dailyNoteFiles.sort(
-		(a, b) => getFileMoment(b, dailyNotesFolder, format).valueOf() - getFileMoment(a, dailyNotesFolder, format).valueOf()
+		(a, b) =>
+			getFileMoment(b, dailyNotesFolder, format).valueOf() - getFileMoment(a, dailyNotesFolder, format).valueOf()
 	);
 	return sorted[1];
+};
+
+export const getTodaysNote = () => {
+	return getDailyNote(window.moment(), getAllDailyNotes());
+};
+
+export const getDailyNoteTemplateHeadings = async (app: App) => {
+	const { template: templatePath } = getDailyNoteSettings();
+	if (!templatePath) {
+		return [];
+	}
+	const templateFile = app.vault.getAbstractFileByPath(templatePath + '.md');
+	const templateContent = await app.vault.read(templateFile as TFile);
+
+	return TodoParser.getTodosHeaders(templateContent.split(/\r?\n|\r|\n/g));
 };
 
 const getFileMoment = (file: TFile, folder: string, format: string | undefined) => {
@@ -38,10 +55,6 @@ const getFileMoment = (file: TFile, folder: string, format: string | undefined) 
 		// Remove length of file extension from end of path
 		path = path.substring(0, path.length - file.extension.length - 1);
 	}
-
+	const { moment } = window;
 	return moment(path, format);
-};
-
-export const getTodaysNote = () => {
-	return getDailyNote(window.moment(), getAllDailyNotes());
 };

@@ -1,3 +1,4 @@
+import { isEmpty } from 'src/helpers/stringHelper';
 import Todo from 'src/models/todo';
 
 export default class TodoParser {
@@ -8,7 +9,7 @@ export default class TodoParser {
 		for (let lineNum = 0; lineNum < noteContentLines.length; lineNum++) {
 			const line = noteContentLines[lineNum];
 			if (!Todo.isTodoLine(line)) {
-				if (this.isEmptyLine(line)) {
+				if (isEmpty(line)) {
 					continue;
 				}
 
@@ -16,7 +17,6 @@ export default class TodoParser {
 				continue;
 			}
 
-			// is a todo line
 			const todo: Todo = new Todo(line, lineNum, lastMarkdownLine);
 			if (todo.isRoot()) {
 				todoMap[lastMarkdownLine] = todoMap[lastMarkdownLine] ? [...todoMap[lastMarkdownLine], todo] : [todo];
@@ -37,7 +37,16 @@ export default class TodoParser {
 		return todoMap;
 	}
 
-	private isEmptyLine(line: string): boolean {
-		return line.trim().length === 0;
+	static getTodosHeaders(noteContentLines: string[]): string[] {
+		const todoHeaders = [];
+		for (let lineNum = 0; lineNum < noteContentLines.length; lineNum++) {
+			const line = noteContentLines[lineNum];
+			if (isEmpty(line)) {
+				continue;
+			}
+
+			todoHeaders.push(line);
+		}
+		return todoHeaders;
 	}
 }

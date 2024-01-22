@@ -1,4 +1,4 @@
-import { getIndentation } from 'src/helpers/fileHelper';
+import { getIndentation } from 'src/helpers/stringHelper';
 import { allTodoFilter, checkedTodoFilter, uncheckedTodoFilter } from 'src/utils/contants';
 
 export default class Todo {

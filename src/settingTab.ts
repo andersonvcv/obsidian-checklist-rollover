@@ -1,13 +1,11 @@
 import RolloverTodosPlugin from 'main';
 import { Setting, PluginSettingTab } from 'obsidian';
 import { RolloverSettings } from './models/settings';
-import { getDailyNoteTemplateHeadings } from './helpers/fileHelper';
+import { getDailyNoteTemplateHeadings } from './helpers/dailyNotesHelper';
 
 const DEFAULT_SETTINGS: RolloverSettings = {
 	templateHeading: 'none',
 	deleteOnComplete: false,
-	removeEmptyTodos: false,
-	rolloverChildren: true,
 	rolloverOnFileCreate: true
 };
 
@@ -24,21 +22,22 @@ export default class SettingTab extends PluginSettingTab {
 
 		await this.addTemplateHeadingSelection();
 		this.addDeleteAfterMoving();
-		this.addMoveEmptyTodos();
-		this.addRolloverChildren();
 		this.addAutomaticallyRolloverOnDailyNoteCreation();
 	}
 
 	async addTemplateHeadingSelection() {
-		const templateHeadings = await getDailyNoteTemplateHeadings(this.app);
+		const todosHeaders = await getDailyNoteTemplateHeadings(this.app);
+		console.log(`todosHeaders: ${todosHeaders}`);
 
 		new Setting(this.containerEl)
 			.setName('Template heading')
-			.setDesc("Which template heading should the moved Todo's go under?")
+			.setDesc(
+				'Rollover all todos under this single heading. If none is selected, all todos will be rolled over under each individual heading.'
+			)
 			.addDropdown(dropdown =>
 				dropdown
 					.addOptions({
-						...templateHeadings.reduce((acc: { [key: string]: string }, heading) => {
+						...todosHeaders.reduce((acc: { [key: string]: string }, heading) => {
 							const trimmedHeading = heading.replace(/^#+\s/, '');
 							acc[trimmedHeading] = trimmedHeading;
 							return acc;
@@ -56,36 +55,10 @@ export default class SettingTab extends PluginSettingTab {
 	addDeleteAfterMoving() {
 		new Setting(this.containerEl)
 			.setName('Delete todos from previous day')
-			.setDesc(
-				`Delete Todo's from previous Daily Note after moving to today's Daily Note. Enabling this is destructive and may result in lost data.`
-			)
+			.setDesc(`Delete Todo's after rolled over. There is no undo action for this.`)
 			.addToggle(toggle =>
 				toggle.setValue(this.plugin.settings.deleteOnComplete).onChange(value => {
 					this.plugin.settings.deleteOnComplete = value;
-					this.saveSettings();
-				})
-			);
-	}
-
-	addMoveEmptyTodos() {
-		new Setting(this.containerEl)
-			.setName('Remove empty todos in rollover')
-			.setDesc(`Do not roll over empty Todo's to the next day.`)
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.removeEmptyTodos).onChange(value => {
-					this.plugin.settings.removeEmptyTodos = value;
-					this.saveSettings();
-				})
-			);
-	}
-
-	addRolloverChildren() {
-		new Setting(this.containerEl)
-			.setName('Roll over children of todos')
-			.setDesc(`Roll over nested Markdown elements beneath your todos.`)
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.rolloverChildren || false).onChange(value => {
-					this.plugin.settings.rolloverChildren = value;
 					this.saveSettings();
 				})
 			);

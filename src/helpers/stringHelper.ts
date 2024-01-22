@@ -17,3 +17,11 @@ export const formatWithTrailingSlash = (folder: string | undefined) => {
 	}
 	return `${folder}/`;
 };
+
+export const isEmpty = (str: string): boolean => {
+	return str.trim().length === 0;
+};
+
+export const getIndentation = (line: string) => {
+	return line.search(/\S/);
+};
